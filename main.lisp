@@ -39,7 +39,7 @@
                          (form form)
                          (performances performances))
             obj
-          (format stream "~a~%Composer: ~a~%Era: ~a~%Form: ~a~%Performances: ~a" title composer era form performances))))
+          (format stream "~%Title: ~a~%Composer: ~a~%Era: ~a~%Form: ~a~%Performances: ~a" title composer era form performances))))
 
 (defmethod print-object ((obj performance) stream)
   (print-unreadable-object (obj stream :type t)
@@ -47,10 +47,7 @@
                      (conductor conductor)
                      (rating rating))
         obj
-      (format stream "~a~%Conductor: ~a~%Rating: ~a" performers conductor rating))))
-
-
-(defvar p10 (make-piece "title" "composer" :era "era" :form "form" :performances (list (make-performance "performers" :conductor "conductor" :rating "rating") (make-performance "performers" :conductor "conductor" :rating "rating"))))
+      (format stream "~%Performers: ~a, Conductor: ~a, Rating: ~a~%" performers conductor rating))))
 
 (defun make-piece (title composer &key era form performances)
   (make-instance `piece :title title :composer composer :era era :form form :performances performances))
@@ -58,26 +55,23 @@
 (defun make-performance (performers &key conductor rating)
   (make-instance `performance :conductor conductor :performers performers :rating rating))
 
-(defun make-entry (title composer &key era form performances conductor performers rating)
-  (make-performance title composer era form performances))
+(defun make-entry (title composer &key era form performances performers conductor rating)
+  (make-piece title composer :era era :form form
+                             :performances (list (funcall
+                                                  #'make-performance performers
+                                                  :conductor conductor
+                                                  :rating rating))))
 
 (defvar *db* nil)
 
-(defun add-record (piece) (push piece *db*))
-
-(defun make-performance (conductor performers rating)
-  (list :conductor conductor :performers performers :rating rating))
-
-(defun dump-db ()
-  (dolist (piece *db*)
-    (format t "~{~a:~10t~a~%~}~%" piece)))
+(defun add-entry (piece) (push piece *db*))
 
 (defun save-db (filename)
-  (with-open-file (out filename
-                       :direction :output
-                       :if-exists :supersede)
-    (with-standard-io-syntax
-      (print *db* out))))
+ (with-open-file (out filename
+                      :direction :output
+                      :if-exists :supersede)
+   (with-standard-io-syntax
+     (print *db* out))))
 
 (defun load-db (filename)
   (with-open-file (in filename)
